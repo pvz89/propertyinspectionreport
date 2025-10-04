@@ -1,740 +1,382 @@
 import streamlit as st
 import pandas as pd
-from streamlit.components.v1 import html
+from datetime import datetime, timedelta
+import requests
 
 # Page configuration
 st.set_page_config(
-    page_title="London Property Inspections | Professional Building Surveyors",
+    page_title="Professional Property Inspection Services | London",
     page_icon="🏠",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
 
 # Custom CSS for styling
-def local_css():
-    st.markdown("""
-    <style>
-    :root {
-        --primary: #2563eb;
-        --primary-dark: #1d4ed8;
-        --secondary: #0f172a;
-        --accent: #f59e0b;
-        --light: #f8fafc;
-        --gray: #64748b;
-        --gray-light: #e2e8f0;
-        --white: #ffffff;
-        --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-        --border-radius: 8px;
-        --transition: all 0.3s ease;
-    }
-    
-    .main {
-        padding: 0;
-    }
-    
-    .stApp {
-        background-color: var(--white);
-    }
-    
-    .hero-section {
-        background: linear-gradient(135deg, rgba(37, 99, 235, 0.9) 0%, rgba(29, 78, 216, 0.9) 100%);
-        padding: 100px 0;
+st.markdown("""
+<style>
+    .main-header {
+        font-size: 3.5rem;
+        color: #2E86AB;
         text-align: center;
-        color: white;
-        margin-bottom: 0;
-    }
-    
-    .section {
-        padding: 80px 0;
-    }
-    
-    .section-light {
-        background-color: var(--light);
-    }
-    
-    .section-header {
-        text-align: center;
-        margin-bottom: 60px;
-    }
-    
-    .section-header h2 {
-        font-size: 2.5rem;
+        margin-bottom: 1rem;
         font-weight: 700;
-        margin-bottom: 15px;
-        color: var(--secondary);
     }
-    
-    .section-header p {
-        font-size: 1.125rem;
-        color: var(--gray);
-        max-width: 700px;
-        margin: 0 auto;
-    }
-    
-    .service-card {
-        background-color: var(--white);
-        border-radius: var(--border-radius);
-        padding: 40px 30px;
-        text-align: center;
-        box-shadow: var(--shadow);
-        transition: var(--transition);
-        height: 100%;
-    }
-    
-    .service-card:hover {
-        transform: translateY(-10px);
-        box-shadow: var(--shadow-lg);
-    }
-    
-    .service-icon {
-        width: 70px;
-        height: 70px;
-        background-color: rgba(37, 99, 235, 0.1);
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin: 0 auto 25px;
-    }
-    
-    .service-icon i {
+    .sub-header {
         font-size: 1.8rem;
-        color: var(--primary);
-    }
-    
-    .service-card h3 {
-        font-size: 1.5rem;
+        color: #A23B72;
+        text-align: center;
+        margin-bottom: 2rem;
         font-weight: 600;
-        margin-bottom: 15px;
     }
-    
-    .service-card p {
-        color: var(--gray);
-        margin-bottom: 20px;
+    .section-header {
+        font-size: 2.2rem;
+        color: #2E86AB;
+        margin: 2rem 0 1rem 0;
+        border-bottom: 3px solid #F18F01;
+        padding-bottom: 0.5rem;
     }
-    
+    .service-card {
+        background-color: #f8f9fa;
+        padding: 1.5rem;
+        border-radius: 10px;
+        border-left: 5px solid #F18F01;
+        margin: 1rem 0;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
     .testimonial-card {
-        background-color: var(--white);
-        border-radius: var(--border-radius);
-        padding: 30px;
-        box-shadow: var(--shadow);
-        height: 100%;
+        background-color: #ffffff;
+        padding: 1.5rem;
+        border-radius: 10px;
+        border: 2px solid #2E86AB;
+        margin: 1rem 0;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     }
-    
-    .testimonial-content {
-        margin-bottom: 20px;
-        position: relative;
+    .contact-form {
+        background-color: #f0f2f6;
+        padding: 2rem;
+        border-radius: 10px;
+        margin: 1rem 0;
     }
-    
-    .testimonial-content:before {
-        content: '"';
-        font-size: 4rem;
-        color: var(--gray-light);
-        position: absolute;
-        top: -20px;
-        left: -10px;
-        z-index: 1;
-    }
-    
-    .testimonial-content p {
-        position: relative;
-        z-index: 2;
-        font-style: italic;
-        color: var(--secondary);
-    }
-    
-    .testimonial-author {
-        display: flex;
-        align-items: center;
-        gap: 15px;
-    }
-    
-    .author-avatar {
-        width: 50px;
-        height: 50px;
-        border-radius: 50%;
-        background-color: var(--gray-light);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    
-    .author-avatar i {
-        font-size: 1.5rem;
-        color: var(--gray);
-    }
-    
-    .author-info h4 {
-        font-weight: 600;
-        margin-bottom: 5px;
-    }
-    
-    .author-info p {
-        font-size: 0.875rem;
-        color: var(--gray);
-    }
-    
-    .step-container {
-        display: flex;
-        justify-content: space-between;
-        flex-wrap: wrap;
-        margin-top: 50px;
-        position: relative;
-    }
-    
-    .step-container:before {
-        content: '';
-        position: absolute;
-        top: 40px;
-        left: 0;
-        right: 0;
-        height: 2px;
-        background-color: var(--gray-light);
-        z-index: 1;
-    }
-    
-    .step {
-        text-align: center;
-        position: relative;
-        z-index: 2;
-        flex: 1;
-        min-width: 200px;
-        padding: 0 15px;
-    }
-    
-    .step-number {
-        width: 80px;
-        height: 80px;
-        background-color: var(--primary);
-        color: var(--white);
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.5rem;
-        font-weight: 700;
-        margin: 0 auto 20px;
-        position: relative;
-    }
-    
-    .step h3 {
-        font-size: 1.25rem;
-        font-weight: 600;
-        margin-bottom: 15px;
-    }
-    
-    .step p {
-        color: var(--gray);
-    }
-    
-    .contact-item {
-        display: flex;
-        align-items: center;
-        gap: 15px;
-        margin-bottom: 20px;
-    }
-    
-    .contact-icon {
-        width: 50px;
-        height: 50px;
-        background-color: rgba(37, 99, 235, 0.1);
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    
-    .contact-icon i {
-        font-size: 1.25rem;
-        color: var(--primary);
-    }
-    
-    .contact-text h4 {
-        font-weight: 600;
-        margin-bottom: 5px;
-    }
-    
-    .contact-text p {
-        color: var(--gray);
-        margin: 0;
-    }
-    
-    .footer {
-        background-color: var(--secondary);
-        color: var(--white);
-        padding: 70px 0 30px;
-    }
-    
-    .footer-col h3 {
-        font-size: 1.25rem;
-        font-weight: 600;
-        margin-bottom: 25px;
-        position: relative;
-    }
-    
-    .footer-col h3:after {
-        content: '';
-        position: absolute;
-        left: 0;
-        bottom: -10px;
-        width: 40px;
-        height: 2px;
-        background-color: var(--primary);
-    }
-    
-    .footer-col ul {
-        list-style: none;
-        padding: 0;
-    }
-    
-    .footer-col ul li {
-        margin-bottom: 12px;
-    }
-    
-    .footer-col ul li a {
-        color: rgba(255, 255, 255, 0.7);
-        text-decoration: none;
-        transition: var(--transition);
-    }
-    
-    .footer-col ul li a:hover {
-        color: var(--white);
-        padding-left: 5px;
-    }
-    
-    .social-links {
-        display: flex;
-        gap: 15px;
-        margin-top: 20px;
-    }
-    
-    .social-links a {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 40px;
-        height: 40px;
-        background-color: rgba(255, 255, 255, 0.1);
-        border-radius: 50%;
-        color: var(--white);
-        text-decoration: none;
-        transition: var(--transition);
-    }
-    
-    .social-links a:hover {
-        background-color: var(--primary);
-        transform: translateY(-3px);
-    }
-    
-    .footer-bottom {
-        text-align: center;
-        padding-top: 30px;
-        border-top: 1px solid rgba(255, 255, 255, 0.1);
-        color: rgba(255, 255, 255, 0.7);
-        font-size: 0.875rem;
-    }
-    
-    .cta-button {
-        background-color: var(--primary);
-        color: var(--white);
+    .stButton>button {
+        background-color: #F18F01;
+        color: white;
         border: none;
-        padding: 12px 24px;
-        border-radius: var(--border-radius);
+        padding: 0.5rem 2rem;
+        border-radius: 5px;
         font-weight: 600;
-        cursor: pointer;
-        transition: var(--transition);
-        text-decoration: none;
-        display: inline-block;
     }
-    
-    .cta-button:hover {
-        background-color: var(--primary-dark);
-        transform: translateY(-2px);
+    .stButton>button:hover {
+        background-color: #e68200;
+        color: white;
     }
-    
-    .secondary-button {
-        background-color: transparent;
-        color: var(--white);
-        border: 2px solid var(--white);
-        padding: 12px 24px;
-        border-radius: var(--border-radius);
-        font-weight: 600;
-        cursor: pointer;
-        transition: var(--transition);
-        text-decoration: none;
-        display: inline-block;
-    }
-    
-    .secondary-button:hover {
-        background-color: var(--white);
-        color: var(--primary);
-    }
-    
-    @media (max-width: 768px) {
-        .step-container:before {
-            display: none;
-        }
-        
-        .step {
-            margin-bottom: 40px;
-        }
-    }
-    </style>
-    """, unsafe_allow_html=True)
+</style>
+""", unsafe_allow_html=True)
 
-# Initialize session state for form
-if 'form_submitted' not in st.session_state:
-    st.session_state.form_submitted = False
+# Header Section
+col1, col2, col3 = st.columns([1, 2, 1])
+with col2:
+    st.markdown('<div class="main-header">🏠 Professional Property Inspection Services</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sub-header">Trusted Property Inspections Across London</div>', unsafe_allow_html=True)
+    
+    st.markdown("""
+    <div style='text-align: center; font-size: 1.2rem; color: #555; margin-bottom: 2rem;'>
+        Comprehensive property inspections by certified professionals. 
+        Serving London and surrounding areas since 2010.
+    </div>
+    """, unsafe_allow_html=True)
 
 # Hero Section
-def hero_section():
-    st.markdown("""
-    <div class="hero-section">
-        <div style="max-width: 800px; margin: 0 auto;">
-            <h1 style="font-size: 3.5rem; font-weight: 700; margin-bottom: 20px; line-height: 1.2;">Professional Property Inspection Services in London</h1>
-            <p style="font-size: 1.25rem; margin-bottom: 30px; opacity: 0.9;">Comprehensive building surveys and inspection reports to help you make informed property decisions with confidence.</p>
-            <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
-                <a href="#contact-form" style="background-color: white; color: #2563eb; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; text-decoration: none; display: inline-block;">Get Your Quote</a>
-                <a href="#services" style="background-color: transparent; color: white; border: 2px solid white; padding: 12px 24px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; text-decoration: none; display: inline-block;">Our Services</a>
-            </div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+st.image("https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80", 
+         use_column_width=True, caption="Professional Property Inspections in London")
 
 # Services Section
-def services_section():
-    st.markdown('<div class="section section-light" id="services">', unsafe_allow_html=True)
-    
-    st.markdown("""
-    <div class="section-header">
-        <h2>Our Inspection Services</h2>
-        <p>We offer a range of professional property inspection services tailored to your specific needs.</p>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        st.markdown("""
-        <div class="service-card">
-            <div class="service-icon">
-                <i class="fas fa-clipboard-check">📋</i>
-            </div>
-            <h3>Home Buyer Report</h3>
-            <p>Comprehensive inspection and report for prospective home buyers, identifying issues that may affect your decision.</p>
-            <a href="#contact-form" class="cta-button">Learn More</a>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col2:
-        st.markdown("""
-        <div class="service-card">
-            <div class="service-icon">
-                <i class="fas fa-building">🏢</i>
-            </div>
-            <h3>Building Survey</h3>
-            <p>Detailed structural assessment for older properties or those in need of renovation.</p>
-            <a href="#contact-form" class="cta-button">Learn More</a>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col3:
-        st.markdown("""
-        <div class="service-card">
-            <div class="service-icon">
-                <i class="fas fa-list-check">✅</i>
-            </div>
-            <h3>Snagging List</h3>
-            <p>Thorough inspection of new build properties to identify defects before you complete your purchase.</p>
-            <a href="#contact-form" class="cta-button">Learn More</a>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    st.markdown('</div>', unsafe_allow_html=True)
+st.markdown('<div class="section-header">Our Inspection Services</div>', unsafe_allow_html=True)
 
-# Process Section
-def process_section():
-    st.markdown('<div class="section" id="process">', unsafe_allow_html=True)
-    
+services_col1, services_col2 = st.columns(2)
+
+with services_col1:
     st.markdown("""
-    <div class="section-header">
-        <h2>Our Simple Process</h2>
-        <p>Getting a professional property inspection has never been easier with our straightforward process.</p>
+    <div class="service-card">
+        <h3>🏘️ Residential Property Surveys</h3>
+        <ul>
+            <li>Home Buyer Reports</li>
+            <li>Building Surveys</li>
+            <li>Snagging Lists for New Builds</li>
+            <li>Specific Defect Surveys</li>
+        </ul>
     </div>
     """, unsafe_allow_html=True)
     
     st.markdown("""
-    <div class="step-container">
-        <div class="step">
-            <div class="step-number">1</div>
-            <h3>Book Inspection</h3>
-            <p>Contact us to schedule your property inspection at a convenient time.</p>
-        </div>
-        <div class="step">
-            <div class="step-number">2</div>
-            <h3>Property Assessment</h3>
-            <p>Our certified surveyors conduct a thorough inspection of the property.</p>
-        </div>
-        <div class="step">
-            <div class="step-number">3</div>
-            <h3>Detailed Report</h3>
-            <p>Receive a comprehensive report with findings and recommendations.</p>
-        </div>
-        <div class="step">
-            <div class="step-number">4</div>
-            <h3>Follow-up Support</h3>
-            <p>We're available to answer any questions and provide further guidance.</p>
-        </div>
+    <div class="service-card">
+        <h3>🏢 Commercial Property Inspections</h3>
+        <ul>
+            <li>Commercial Building Surveys</li>
+            <li>Dilapidation Surveys</li>
+            <li>Condition Surveys</li>
+            <li>Technical Due Diligence</li>
+        </ul>
+    </div>
+    """, unsafe_allow_html=True)
+
+with services_col2:
+    st.markdown("""
+    <div class="service-card">
+        <h3>🔍 Specialized Inspections</h3>
+        <ul>
+            <li>Damp and Timber Surveys</li>
+            <li>Roof and Loft Inspections</li>
+            <li>Electrical System Checks</li>
+            <li>Plumbing and Heating Assessments</li>
+        </ul>
     </div>
     """, unsafe_allow_html=True)
     
-    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown("""
+    <div class="service-card">
+        <h3>📊 Professional Reports</h3>
+        <ul>
+            <li>Detailed Digital Reports</li>
+            <li>Photographic Evidence</li>
+            <li>Repair Cost Estimates</li>
+            <li>Priority Action Plans</li>
+        </ul>
+    </div>
+    """, unsafe_allow_html=True)
+
+# Why Choose Us Section
+st.markdown('<div class="section-header">Why Choose Our Services?</div>', unsafe_allow_html=True)
+
+benefits_col1, benefits_col2, benefits_col3 = st.columns(3)
+
+with benefits_col1:
+    st.markdown("""
+    <div style='text-align: center; padding: 1rem;'>
+        <h3>🎓 Certified Experts</h3>
+        <p>RICS & CIOB certified surveyors with 10+ years experience</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    st.markdown("""
+    <div style='text-align: center; padding: 1rem;'>
+        <h3>⚡ Quick Turnaround</h3>
+        <p>Reports delivered within 48 hours of inspection</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+with benefits_col2:
+    st.markdown("""
+    <div style='text-align: center; padding: 1rem;'>
+        <h3>💷 Competitive Pricing</h3>
+        <p>Transparent pricing with no hidden costs</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    st.markdown("""
+    <div style='text-align: center; padding: 1rem;'>
+        <h3>📱 Digital Reports</h3>
+        <p>Interactive digital reports with photos and videos</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+with benefits_col3:
+    st.markdown("""
+    <div style='text-align: center; padding: 1rem;'>
+        <h3>🏆 5-Star Rated</h3>
+        <p>Consistently rated 5 stars by our clients</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    st.markdown("""
+    <div style='text-align: center; padding: 1rem;'>
+        <h3>🔧 Post-Inspection Support</h3>
+        <p>Free consultation after your inspection</p>
+    </div>
+    """, unsafe_allow_html=True)
 
 # Testimonials Section
-def testimonials_section():
-    st.markdown('<div class="section section-light" id="testimonials">', unsafe_allow_html=True)
-    
+st.markdown('<div class="section-header">What Our Clients Say</div>', unsafe_allow_html=True)
+
+testimonial_col1, testimonial_col2 = st.columns(2)
+
+with testimonial_col1:
     st.markdown("""
-    <div class="section-header">
-        <h2>What Our Clients Say</h2>
-        <p>Don't just take our word for it - hear from our satisfied customers across London.</p>
+    <div class="testimonial-card">
+        <p>"The survey was incredibly thorough and saved us from purchasing a property with serious structural issues. The report was clear and detailed."</p>
+        <p><strong>Sarah M.</strong> - Kensington</p>
+        <p>⭐️⭐️⭐️⭐️⭐️</p>
     </div>
     """, unsafe_allow_html=True)
     
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        st.markdown("""
-        <div class="testimonial-card">
-            <div class="testimonial-content">
-                <p>The inspection report was incredibly detailed and helped us negotiate a better price on our new home. The surveyor was professional and answered all our questions.</p>
-            </div>
-            <div class="testimonial-author">
-                <div class="author-avatar">
-                    <i class="fas fa-user">👤</i>
-                </div>
-                <div class="author-info">
-                    <h4>Sarah Johnson</h4>
-                    <p>Kensington</p>
-                </div>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col2:
-        st.markdown("""
-        <div class="testimonial-card">
-            <div class="testimonial-content">
-                <p>As a first-time buyer, I was nervous about the process. The team made everything clear and the report highlighted issues I would never have spotted myself.</p>
-            </div>
-            <div class="testimonial-author">
-                <div class="author-avatar">
-                    <i class="fas fa-user">👤</i>
-                </div>
-                <div class="author-info">
-                    <h4>Michael Chen</h4>
-                    <p>Islington</p>
-                </div>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col3:
-        st.markdown("""
-        <div class="testimonial-card">
-            <div class="testimonial-content">
-                <p>We've used London Property Inspections for three property purchases now. Their consistent quality and attention to detail give us complete confidence in our investments.</p>
-            </div>
-            <div class="testimonial-author">
-                <div class="author-avatar">
-                    <i class="fas fa-user">👤</i>
-                </div>
-                <div class="author-info">
-                    <h4>Robert & Emma Wilson</h4>
-                    <p>Greenwich</p>
-                </div>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    st.markdown('</div>', unsafe_allow_html=True)
-
-# CTA Section
-def cta_section():
     st.markdown("""
-    <div style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: white; padding: 100px 0; text-align: center;">
-        <div style="max-width: 800px; margin: 0 auto;">
-            <h2 style="font-size: 2.5rem; font-weight: 700; margin-bottom: 20px;">Ready to Protect Your Property Investment?</h2>
-            <p style="font-size: 1.125rem; margin-bottom: 30px; opacity: 0.9; max-width: 700px; margin-left: auto; margin-right: auto;">Don't leave your property purchase to chance. Our expert inspectors will give you the confidence to proceed with your transaction.</p>
-            <a href="#contact-form" style="background-color: white; color: #2563eb; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; text-decoration: none; display: inline-block;">Schedule Your Inspection</a>
-        </div>
+    <div class="testimonial-card">
+        <p>"Professional service from start to finish. The surveyor spent over 3 hours inspecting the property and provided invaluable advice."</p>
+        <p><strong>James T.</strong> - Islington</p>
+        <p>⭐️⭐️⭐️⭐️⭐️</p>
     </div>
     """, unsafe_allow_html=True)
 
-# Contact Section
-def contact_section():
-    st.markdown('<div class="section" id="contact">', unsafe_allow_html=True)
+with testimonial_col2:
+    st.markdown("""
+    <div class="testimonial-card">
+        <p>"As a first-time buyer, I found the process confusing until I used their services. They explained everything clearly and gave me peace of mind."</p>
+        <p><strong>Emma L.</strong> - Camden</p>
+        <p>⭐️⭐️⭐️⭐️⭐️</p>
+    </div>
+    """, unsafe_allow_html=True)
     
+    st.markdown("""
+    <div class="testimonial-card">
+        <p>"The commercial property inspection was comprehensive and helped us negotiate a better price. Excellent value for money."</p>
+        <p><strong>David R.</strong> - City of London</p>
+        <p>⭐️⭐️⭐️⭐️⭐️</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+# Pricing Section
+st.markdown('<div class="section-header">Our Pricing</div>', unsafe_allow_html=True)
+
+pricing_data = {
+    'Service Type': [
+        'Home Buyer Report', 
+        'Building Survey', 
+        'Snagging List', 
+        'Commercial Survey',
+        'Specific Defect Survey'
+    ],
+    'Starting From': [
+        '£450', 
+        '£650', 
+        '£350', 
+        '£850',
+        '£250'
+    ],
+    'Turnaround': [
+        '48 hours', 
+        '72 hours', 
+        '24 hours', 
+        '5 days',
+        '24 hours'
+    ],
+    'Best For': [
+        'Standard residential properties',
+        'Older or unique properties',
+        'New build properties',
+        'Commercial buildings',
+        'Specific concerns'
+    ]
+}
+
+df = pd.DataFrame(pricing_data)
+st.dataframe(df, use_container_width=True, hide_index=True)
+
+# Contact Form Section
+st.markdown('<div class="section-header">Book Your Inspection</div>', unsafe_allow_html=True)
+
+with st.form("contact_form"):
     col1, col2 = st.columns(2)
     
     with col1:
-        st.markdown("""
-        <div style="padding-right: 40px;">
-            <h2 style="font-size: 2.5rem; font-weight: 700; margin-bottom: 20px;">Get In Touch</h2>
-            <p style="color: #64748b; margin-bottom: 30px;">Contact us today to schedule your property inspection or to learn more about our services.</p>
-            
-            <div class="contact-details">
-                <div class="contact-item">
-                    <div class="contact-icon">
-                        <i class="fas fa-phone">📞</i>
-                    </div>
-                    <div class="contact-text">
-                        <h4>Phone</h4>
-                        <p>020 7123 4567</p>
-                    </div>
-                </div>
-                <div class="contact-item">
-                    <div class="contact-icon">
-                        <i class="fas fa-envelope">✉️</i>
-                    </div>
-                    <div class="contact-text">
-                        <h4>Email</h4>
-                        <p>info@londonpropertyinspections.co.uk</p>
-                    </div>
-                </div>
-                <div class="contact-item">
-                    <div class="contact-icon">
-                        <i class="fas fa-map-marker-alt">📍</i>
-                    </div>
-                    <div class="contact-text">
-                        <h4>Office</h4>
-                        <p>123 Inspection Lane, London, EC1A 1BB</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col2:
-        st.markdown('<div id="contact-form"></div>', unsafe_allow_html=True)
-        st.markdown("### Request a Quote")
+        name = st.text_input("Full Name *")
+        email = st.text_input("Email Address *")
+        phone = st.text_input("Phone Number *")
         
-        with st.form("contact_form", clear_on_submit=True):
-            name = st.text_input("Full Name", placeholder="Your Name")
-            email = st.text_input("Email Address", placeholder="Your Email")
-            phone = st.text_input("Phone Number", placeholder="Your Phone")
-            service = st.selectbox(
-                "Service Required",
-                ["Select a Service", "Home Buyer Report", "Building Survey", "Snagging List", "Other"]
-            )
-            message = st.text_area("Message", placeholder="Tell us about your property...", height=120)
-            
-            submitted = st.form_submit_button("Send Message", type="primary")
-            
-            if submitted:
-                if name and email and service != "Select a Service":
-                    st.session_state.form_submitted = True
-                    st.success("Thank you for your inquiry! We will contact you shortly.")
-                else:
-                    st.error("Please fill in all required fields.")
+    with col2:
+        property_type = st.selectbox(
+            "Property Type *",
+            ["Residential House", "Residential Flat", "Commercial", "Mixed Use", "Other"]
+        )
+        inspection_type = st.selectbox(
+            "Inspection Type *",
+            ["Home Buyer Report", "Building Survey", "Snagging List", "Commercial Survey", "Specific Defect", "Not Sure"]
+        )
+        postcode = st.text_input("Property Postcode *")
     
-    st.markdown('</div>', unsafe_allow_html=True)
+    message = st.text_area("Additional Information", placeholder="Tell us about your property and specific concerns...")
+    
+    preferred_date = st.date_input("Preferred Inspection Date", min_value=datetime.now().date())
+    
+    submitted = st.form_submit_button("Request Free Quote")
+    
+    if submitted:
+        if name and email and phone and postcode:
+            st.success("🎉 Thank you for your inquiry! We'll contact you within 24 hours to discuss your inspection needs.")
+            
+            # In a real app, you would send this data to your backend
+            st.info(f"""
+            **Submission Summary:**
+            - Name: {name}
+            - Email: {email}
+            - Phone: {phone}
+            - Property Type: {property_type}
+            - Inspection Type: {inspection_type}
+            - Postcode: {postcode}
+            - Preferred Date: {preferred_date}
+            """)
+        else:
+            st.error("Please fill in all required fields (*)")
+
+# Contact Information
+st.markdown('<div class="section-header">Contact Us</div>', unsafe_allow_html=True)
+
+contact_col1, contact_col2, contact_col3 = st.columns(3)
+
+with contact_col1:
+    st.markdown("""
+    <div style='text-align: center;'>
+        <h3>📞 Phone</h3>
+        <p>020 7123 4567</p>
+        <p>Mon-Fri: 8am-6pm</p>
+        <p>Sat: 9am-4pm</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+with contact_col2:
+    st.markdown("""
+    <div style='text-align: center;'>
+        <h3>✉️ Email</h3>
+        <p>info@propertyinspectionslondon.co.uk</p>
+        <p>quotes@propertyinspectionslondon.co.uk</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+with contact_col3:
+    st.markdown("""
+    <div style='text-align: center;'>
+        <h3>🏢 Office</h3>
+        <p>123 Inspection House</p>
+        <p>London, EC1A 1BB</p>
+        <p>United Kingdom</p>
+    </div>
+    """, unsafe_allow_html=True)
 
 # Footer
-def footer():
-    st.markdown("""
-    <div class="footer">
-        <div class="container">
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 40px; margin-bottom: 50px;">
-                <div class="footer-col">
-                    <h3>London Property Inspections</h3>
-                    <p>Professional property inspection services across London, helping buyers make informed decisions with confidence.</p>
-                    <div class="social-links">
-                        <a href="#"><i class="fab fa-facebook-f">f</i></a>
-                        <a href="#"><i class="fab fa-twitter">t</i></a>
-                        <a href="#"><i class="fab fa-linkedin-in">in</i></a>
-                        <a href="#"><i class="fab fa-instagram">ig</i></a>
-                    </div>
-                </div>
-                <div class="footer-col">
-                    <h3>Our Services</h3>
-                    <ul>
-                        <li><a href="#">Home Buyer Reports</a></li>
-                        <li><a href="#">Building Surveys</a></li>
-                        <li><a href="#">Snagging Lists</a></li>
-                        <li><a href="#">Commercial Inspections</a></li>
-                        <li><a href="#">Damp & Timber Surveys</a></li>
-                    </ul>
-                </div>
-                <div class="footer-col">
-                    <h3>Quick Links</h3>
-                    <ul>
-                        <li><a href="#services">Services</a></li>
-                        <li><a href="#process">Our Process</a></li>
-                        <li><a href="#testimonials">Testimonials</a></li>
-                        <li><a href="#contact">Contact</a></li>
-                        <li><a href="#">Privacy Policy</a></li>
-                    </ul>
-                </div>
-                <div class="footer-col">
-                    <h3>Contact Us</h3>
-                    <ul>
-                        <li>📞 020 7123 4567</li>
-                        <li>✉️ info@londonpropertyinspections.co.uk</li>
-                        <li>📍 123 Inspection Lane, London, EC1A 1BB</li>
-                    </ul>
-                </div>
-            </div>
-            <div class="footer-bottom">
-                <p>&copy; 2023 London Property Inspections. All rights reserved.</p>
-            </div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+st.markdown("---")
+footer_col1, footer_col2, footer_col3 = st.columns(3)
 
-# Main App
-def main():
-    # Apply custom CSS
-    local_css()
-    
-    # Hide Streamlit default elements
-    hide_streamlit_style = """
-                <style>
-                #MainMenu {visibility: hidden;}
-                footer {visibility: hidden;}
-                header {visibility: hidden;}
-                </style>
-                """
-    st.markdown(hide_streamlit_style, unsafe_allow_html=True)
-    
-    # Navigation (simplified for Streamlit)
+with footer_col1:
     st.markdown("""
-    <div style="background-color: white; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); position: sticky; top: 0; z-index: 100; padding: 20px 0;">
-        <div style="display: flex; justify-content: space-between; align-items: center; max-width: 1200px; margin: 0 auto; padding: 0 20px;">
-            <a href="#" style="display: flex; align-items: center; gap: 10px; text-decoration: none; color: #0f172a; font-weight: 700; font-size: 1.5rem;">
-                <span style="color: #2563eb; font-size: 1.8rem;">🏠</span>
-                <span>London Property Inspections</span>
-            </a>
-            <div style="display: flex; gap: 30px;">
-                <a href="#services" style="text-decoration: none; color: #0f172a; font-weight: 500;">Services</a>
-                <a href="#process" style="text-decoration: none; color: #0f172a; font-weight: 500;">Process</a>
-                <a href="#testimonials" style="text-decoration: none; color: #0f172a; font-weight: 500;">Testimonials</a>
-                <a href="#contact" style="text-decoration: none; color: #0f172a; font-weight: 500;">Contact</a>
-            </div>
-            <a href="#contact-form" style="background-color: #2563eb; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; cursor: pointer; text-decoration: none;">Book Inspection</a>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # Page sections
-    hero_section()
-    services_section()
-    process_section()
-    testimonials_section()
-    cta_section()
-    contact_section()
-    footer()
+    **Professional Property Inspection Services London**  
+    RICS & CIOB Certified  
+    Fully Insured & Accredited
+    """)
 
-if __name__ == "__main__":
-    main()
+with footer_col2:
+    st.markdown("""
+    **Quick Links**  
+    [Services](#our-inspection-services) • 
+    [Pricing](#our-pricing) • 
+    [Contact](#contact-us)
+    """)
+
+with footer_col3:
+    st.markdown("""
+    **Connect With Us**  
+    📱 LinkedIn • Twitter • Facebook
+    """)
+
+st.markdown("""
+<div style='text-align: center; color: #666; margin-top: 2rem;'>
+    © 2024 Professional Property Inspection Services London. All rights reserved.
+</div>
+""", unsafe_allow_html=True)
